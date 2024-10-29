@@ -175,29 +175,33 @@ class CharCorruptionDataset(Dataset):
         ### TODO:
         ### [part e]: see spec above
 
-        ### START CODE HERE
+    ### START CODE HERE
         document = self.data[idx]
 
-        # Step 1: Randomly truncate the document
-        max_len = int(self.block_size * 3 / 4)
-        truncated_len = random.randint(4, max_len)
-        truncated_document = document[:truncated_len]
+        # Randomly truncate the document to a length between 4 and max_context_size
+        truncated_length = random.randint(4, self.max_context_size)
+        truncated_document = document[:truncated_length]
 
-        # Step 2: Break the truncated document into three substrings
-        doc_len = len(truncated_document)
-        mask_len = random.randint(1, max(1, doc_len // 4))
-        mask_start = random.randint(0, doc_len - mask_len)
-        prefix = truncated_document[:mask_start]
-        masked_content = truncated_document[mask_start:mask_start + mask_len]
-        suffix = truncated_document[mask_start + mask_len:]
-        # Step 3: Rearrange substrings into the masked string
-        masked_string = prefix + self.MASK_CHAR + suffix + self.MASK_CHAR + masked_content + self.MASK_CHAR
+        # Determine the length of the masked content
+        masked_length = random.randint(1, truncated_length // 2)
+        prefix_length = random.randint(0, truncated_length - masked_length)
+        suffix_length = truncated_length - prefix_length - masked_length
+
+        # Split the document into prefix, masked_content, and suffix
+        prefix = truncated_document[:prefix_length]
+        masked_content = truncated_document[prefix_length:prefix_length + masked_length]
+        suffix = truncated_document[prefix_length + masked_length:]
+
+        # Create the masked string
+        masked_string = (prefix + self.MASK_CHAR + suffix + self.MASK_CHAR +
+                        masked_content + self.MASK_CHAR)
         masked_string = masked_string + self.PAD_CHAR * (self.block_size - len(masked_string))
 
-        # Step 4: Construct input and output example pair
+        # Create input (x) and output (y) sequences
         x = masked_string[:-1]
         y = masked_string[1:]
-        # Step 5: Encode the input and output strings as Long tensors
+
+        # Encode the sequences as Long tensors
         x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
         y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
 

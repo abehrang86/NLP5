@@ -25,6 +25,13 @@ def initialize_perceiver_model(mconf, bottleneck_dim=32):
     ### [part g]: Make some other model here
 
     ### START CODE HERE
+    from .model import GPT, DownProjectBlock, UpProjectBlock
+    # Modify the configuration to include the bottleneck dimension and set perceiver flag
+    mconf.perceiver = True
+    mconf.bottleneck_dim = bottleneck_dim
+
+    # Initialize the GPT model with the modified configuration
+    attention_model = GPT(mconf)
     ### END CODE HERE
     return attention_model
 
@@ -118,6 +125,33 @@ def pretrain(pretrain_dataset, block_size, model, pretrain_lr=6e-3, writer=None)
     tconf = None #TrainerConfig object (see trainer.py for more details)
 
     ### START CODE HERE
+    # Define the hyperparameters for pretraining
+    max_epochs = 650
+    batch_size = 128
+    learning_rate = pretrain_lr
+    lr_decay = True
+    warmup_tokens = 512 * 20
+    final_tokens = 200 * len(pretrain_dataset) * block_size
+    num_workers = 0
+
+    # Create the TrainerConfig object
+    tconf = TrainerConfig(
+        max_epochs=max_epochs,
+        batch_size=batch_size,
+        learning_rate=learning_rate,
+        lr_decay=lr_decay,
+        warmup_tokens=warmup_tokens,
+        final_tokens=final_tokens,
+        num_workers=num_workers
+    )
+
+    # Create the Trainer object
+    trainer_obj = Trainer(
+        train_dataset=pretrain_dataset,
+        test_dataset=None,  # No test dataset specified for pretraining
+        config=tconf,
+        model=model
+    )
     ### END CODE HERE
     return tconf, trainer_obj
 
