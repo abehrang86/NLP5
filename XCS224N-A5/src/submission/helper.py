@@ -72,13 +72,15 @@ def finetune(reading_params_path, finetune_corpus_path, pretrain_dataset, block_
     tconf = None #TrainerConfig object (see trainer.py for more details)
     ### START CODE HERE
       # Load model parameters if a path is provided
-    if reading_params_path is not None:
-        model.load_state_dict(torch.load(reading_params_path, map_location=torch.device('cpu')), strict=False)
+    # Load model parameters if a path is provided
+    text = open(finetune_corpus_path, encoding='utf-8').read()
+    # Initialize finetune_dataset with proper dataset
+    finetune_dataset = NameDataset(text, pretrain_dataset)  # Pass pretrain_dataset if needed
 
     # Set hyperparameters based on whether a pretrained model is used
     max_epochs = 10 if reading_params_path else 75
     batch_size = 256
-    learning_rate = 6e-4
+    learning_rate = finetune_lr
     lr_decay = True
     warmup_tokens = 512 * 20
     final_tokens = 200 * len(pretrain_dataset) * block_size
@@ -94,13 +96,15 @@ def finetune(reading_params_path, finetune_corpus_path, pretrain_dataset, block_
         final_tokens=final_tokens,
         num_workers=num_workers
     )
+    
     # Create the Trainer object
     trainer_obj = Trainer(
-        train_dataset=pretrain_dataset,  # Use the pretrain_dataset for training
-        test_dataset=None,                 # Assuming no test dataset is specified here
+        train_dataset=finetune_dataset,
+        test_dataset=None,  # Assuming no test dataset is specified here
         config=tconf,
         model=model
     )
+
     ### END CODE HERE
     return tconf, trainer_obj
 
