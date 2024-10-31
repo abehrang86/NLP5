@@ -72,10 +72,14 @@ def finetune(reading_params_path, finetune_corpus_path, pretrain_dataset, block_
     tconf = None #TrainerConfig object (see trainer.py for more details)
     ### START CODE HERE
       # Load model parameters if a path is provided
-    # Load model parameters if a path is provided
-    text = open(finetune_corpus_path, encoding='utf-8').read()
-    # Initialize finetune_dataset with proper dataset
-    finetune_dataset = NameDataset(text, pretrain_dataset)  # Pass pretrain_dataset if needed
+# Load pretrained parameters if a path is specified
+    if reading_params_path:
+        model.load_state_dict(torch.load(reading_params_path, map_location=torch.device('cpu')))
+
+    # Load and prepare the finetuning dataset
+    with open(finetune_corpus_path, encoding='utf-8') as f:
+        text = f.read()
+    finetune_dataset = NameDataset(text, pretrain_dataset)  # Ensure dataset constructor is compatible
 
     # Set hyperparameters based on whether a pretrained model is used
     max_epochs = 10 if reading_params_path else 75
